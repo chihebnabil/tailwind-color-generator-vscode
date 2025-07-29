@@ -1,0 +1,143 @@
+{
+  "name": "tailwind-color-generator",
+  "displayName": "Tailwind Color Generator",
+  "version": "1.4.0",
+  "description": "Generate Tailwind-compatible color palettes with MCP server integration for AI assistants",
+  "publisher": "RemoteSkills",
+  "main": "./extension.js",
+  "engines": {
+    "vscode": "^1.75.0",
+    "node": ">=18.0.0"
+  },
+  "categories": [
+    "Other",
+    "Themes",
+    "Snippets"
+  ],
+  "keywords": [
+    "tailwind",
+    "colors",
+    "palette",
+    "mcp",
+    "ai",
+    "copilot",
+    "design",
+    "model-context-protocol",
+    "language-model-tools"
+  ],
+  "activationEvents": [
+    "onLanguageModelAccess:copilot"
+  ],
+  "contributes": {
+    "languageModelTools": [
+      {
+        "name": "generate_tailwind_palette",
+        "displayName": "Generate Tailwind Palette",
+        "modelDescription": "Generate a complete Tailwind-compatible color palette from a base color"
+      },
+      {
+        "name": "generate_color_scheme",
+        "displayName": "Generate Color Scheme", 
+        "modelDescription": "Generate multiple color palettes using color harmony strategies (complementary, analogous, monochromatic, triadic)"
+      },
+      {
+        "name": "analyze_color",
+        "displayName": "Analyze Color",
+        "modelDescription": "Analyze a color and provide detailed information about its properties and accessibility"
+      }
+    ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "tailwind-color-generator.mcp-servers",
+        "label": "Tailwind Color Generator"
+      }
+    ],
+    "commands": [
+      {
+        "command": "tailwind-color-generator.configure",
+        "title": "Configure MCP Server",
+        "category": "Tailwind Color Generator"
+      },
+      {
+        "command": "tailwind-color-generator.test",
+        "title": "Test MCP Server",
+        "category": "Tailwind Color Generator"
+      },
+      {
+        "command": "tailwind-color-generator.generatePalette",
+        "title": "Generate Color Palette",
+        "category": "Tailwind Color Generator"
+      }
+    ],
+    "configuration": {
+      "title": "Tailwind Color Generator",
+      "properties": {
+        "tailwindColorGenerator.serverPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the MCP server file (defaults to bundled server)"
+        },
+        "tailwindColorGenerator.autoStart": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically start the MCP server when VS Code starts"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "tailwind-color-generator.generatePalette",
+          "when": "editorTextFocus",
+          "group": "1_modification"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "tailwind-color-generator.configure",
+          "title": "Tailwind Color Generator: Configure MCP Server"
+        },
+        {
+          "command": "tailwind-color-generator.test",
+          "title": "Tailwind Color Generator: Test MCP Server"
+        },
+        {
+          "command": "tailwind-color-generator.generatePalette",
+          "title": "Tailwind Color Generator: Generate Color Palette"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "start": "node mcp-server.js",
+    "dev": "node --watch mcp-server.js",
+    "vscode:prepublish": "npm run compile",
+    "compile": "npm run build",
+    "build": "echo 'Build complete'",
+    "watch": "echo 'Watch mode not configured'",
+    "pretest": "npm run compile",
+    "test": "echo 'No tests configured'",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.4.0",
+    "chroma-js": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "vsce": "^2.15.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/tailwind-color-generator-vscode"
+  },
+  "author": "Chiheb Nabil",
+  "license": "MIT",
+  "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#3B82F6",
+    "theme": "dark"
+  }
+}
