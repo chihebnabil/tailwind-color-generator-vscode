@@ -41,6 +41,7 @@ A Visual Studio Code extension that provides an MCP (Model Context Protocol) ser
    - `generate_tailwind_palette`: Generate a palette from a base color
    - `generate_color_scheme`: Generate multiple palettes using color harmony
    - `analyze_color`: Analyze color properties and accessibility
+   - `generateTailwindGradient`:  Generate Tailwind-compatible gradient color stops from two or more base colors
 
 ### Direct Usage in VS Code
 

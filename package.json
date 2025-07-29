@@ -1,7 +1,7 @@
 {
   "name": "tailwind-color-generator",
   "displayName": "Tailwind Color Generator",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Generate Tailwind-compatible color palettes with MCP server integration for AI assistants",
   "publisher": "RemoteSkills",
   "main": "./extension.js",
