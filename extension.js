@@ -247,7 +247,7 @@ function activate(context) {
         mcpProvider
     );
 
-    context.subscriptions.push(generatePaletteTool, generateSchemeTool, analyzeColorTool, mcpDisposable);
+    context.subscriptions.push(generatePaletteTool, generateSchemeTool, analyzeColorTool);
 
     // Register the command to start/configure the MCP server
     let disposable = vscode.commands.registerCommand('tailwind-color-generator.configure', async () => {
