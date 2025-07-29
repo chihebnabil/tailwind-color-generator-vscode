@@ -6,6 +6,103 @@ const path = require('path');
 // We'll duplicate the logic here for direct use in language model tools
 const TAILWIND_SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
+// Gradient generation functions
+function generateGradientStops(colors, steps = 10, direction = 'to-r') {
+    if (colors.length < 2) {
+        throw new Error('At least 2 colors are required for gradient generation');
+    }
+
+    const stops = [];
+    const stepSize = 100 / (steps - 1);
+    
+    for (let i = 0; i < steps; i++) {
+        const position = i * stepSize;
+        const colorIndex = (i / (steps - 1)) * (colors.length - 1);
+        const lowerIndex = Math.floor(colorIndex);
+        const upperIndex = Math.ceil(colorIndex);
+        const factor = colorIndex - lowerIndex;
+        
+        let interpolatedColor;
+        if (lowerIndex === upperIndex) {
+            interpolatedColor = colors[lowerIndex];
+        } else {
+            interpolatedColor = interpolateColors(colors[lowerIndex], colors[upperIndex], factor);
+        }
+        
+        stops.push({
+            color: interpolatedColor,
+            position: Math.round(position * 100) / 100
+        });
+    }
+    
+    return { stops, direction };
+}
+
+function interpolateColors(color1, color2, factor) {
+    // Simple RGB interpolation
+    const rgb1 = hexToRgb(color1);
+    const rgb2 = hexToRgb(color2);
+    
+    if (!rgb1 || !rgb2) {
+        return color1; // fallback
+    }
+    
+    const r = Math.round(rgb1.r + factor * (rgb2.r - rgb1.r));
+    const g = Math.round(rgb1.g + factor * (rgb2.g - rgb1.g));
+    const b = Math.round(rgb1.b + factor * (rgb2.b - rgb1.b));
+    
+    return rgbToHex(r, g, b);
+}
+
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+function generateTailwindGradient(gradient, format = 'css') {
+    const { stops, direction } = gradient;
+    
+    if (format === 'css') {
+        // Generate CSS gradient
+        const stopStrings = stops.map(stop => `${stop.color} ${stop.position}%`);
+        return `background: linear-gradient(${direction.replace('to-', '')}, ${stopStrings.join(', ')});`;
+    } else if (format === 'tailwind') {
+        // Generate Tailwind utility classes
+        const directionClass = `bg-gradient-${direction}`;
+        const fromColor = `from-[${stops[0].color}]`;
+        const toColor = `to-[${stops[stops.length - 1].color}]`;
+        
+        let classes = `${directionClass} ${fromColor}`;
+        
+        if (stops.length > 2) {
+            // Add via colors for multi-stop gradients
+            const viaColors = stops.slice(1, -1).map(stop => `via-[${stop.color}]`);
+            classes += ` ${viaColors.join(' ')}`;
+        }
+        
+        classes += ` ${toColor}`;
+        return classes;
+    } else if (format === 'json') {
+        return JSON.stringify(gradient, null, 2);
+    } else {
+        // Custom CSS with color stops
+        const stopStrings = stops.map(stop => `${stop.color} ${stop.position}%`);
+        return {
+            gradient: `linear-gradient(${direction.replace('to-', '')}, ${stopStrings.join(', ')})`,
+            stops: stops,
+            direction: direction
+        };
+    }
+}
+
 function generateTailwindPalette(baseColor, name = 'primary') {
     // For now, we'll use a simplified palette generation
     // In a full implementation, you'd want to use chroma-js here
@@ -240,6 +337,73 @@ function activate(context) {
         }
     });
 
+    const generateGradientTool = vscode.lm.registerTool('generate_tailwind_gradient', {
+        invoke: async (options, token) => {
+            const { 
+                colors, 
+                steps = 10, 
+                direction = 'to-r', 
+                format = 'tailwind' 
+            } = options.input;
+            
+            try {
+                if (!colors || colors.length < 2) {
+                    throw new Error('At least 2 colors are required for gradient generation');
+                }
+
+                const gradient = generateGradientStops(colors, steps, direction);
+                const output = generateTailwindGradient(gradient, format);
+                
+                let responseText;
+                if (format === 'css') {
+                    responseText = `Generated CSS gradient from ${colors.length} colors:\n\n${output}\n\nGradient details:\n- Direction: ${direction}\n- Colors: ${colors.join(', ')}\n- Steps: ${steps}`;
+                } else if (format === 'tailwind') {
+                    responseText = `Generated Tailwind gradient classes:\n\n${output}\n\nUsage: Add these classes to your element\nGradient details:\n- Direction: ${direction}\n- Colors: ${colors.join(', ')}\n- Steps: ${steps}`;
+                } else if (format === 'json') {
+                    responseText = `Generated gradient configuration:\n\n${output}\n\nThis JSON includes all gradient stops with positions and colors.`;
+                } else {
+                    responseText = `Generated gradient configuration:\n\n${JSON.stringify(output, null, 2)}\n\nIncludes CSS gradient string and detailed stop information.`;
+                }
+                
+                return new vscode.LanguageModelToolResult([
+                    new vscode.LanguageModelTextPart(responseText)
+                ]);
+            } catch (error) {
+                return new vscode.LanguageModelToolResult([
+                    new vscode.LanguageModelTextPart(`Error generating gradient: ${error.message}`)
+                ]);
+            }
+        },
+        inputSchema: {
+            type: 'object',
+            properties: {
+                colors: {
+                    type: 'array',
+                    items: { type: 'string' },
+                    description: 'Array of colors in hex format (e.g., ["#FF0000", "#00FF00", "#0000FF"])',
+                    minItems: 2
+                },
+                steps: {
+                    type: 'number',
+                    description: 'Number of gradient steps to generate (default: 10)',
+                    minimum: 2,
+                    maximum: 50
+                },
+                direction: {
+                    type: 'string',
+                    enum: ['to-r', 'to-l', 'to-t', 'to-b', 'to-tr', 'to-tl', 'to-br', 'to-bl'],
+                    description: 'Gradient direction (default: "to-r")'
+                },
+                format: {
+                    type: 'string',
+                    enum: ['css', 'tailwind', 'json', 'detailed'],
+                    description: 'Output format (default: "tailwind")'
+                }
+            },
+            required: ['colors']
+        }
+    });
+
     // Register MCP Server Definition Provider for backward compatibility
     const mcpProvider = new TailwindColorMcpProvider(context);
     const mcpDisposable = vscode.lm.registerMcpServerDefinitionProvider(
@@ -247,7 +411,7 @@ function activate(context) {
         mcpProvider
     );
 
-    context.subscriptions.push(generatePaletteTool, generateSchemeTool, analyzeColorTool);
+    context.subscriptions.push(generatePaletteTool, generateSchemeTool, analyzeColorTool, generateGradientTool);
 
     // Register the command to start/configure the MCP server
     let disposable = vscode.commands.registerCommand('tailwind-color-generator.configure', async () => {
@@ -270,6 +434,7 @@ No manual configuration needed - just restart VS Code if you don't see the tools
 Available MCP tools:
 • generate_tailwind_palette - Generate a palette from a base color
 • generate_color_scheme - Generate multiple palettes using color harmony
+• generate_tailwind_gradient - Generate gradients from multiple colors
 • analyze_color - Analyze color properties and accessibility
 
 The server is automatically discovered by GitHub Copilot and other MCP clients.
@@ -453,7 +618,109 @@ Would you like to test the server or view documentation?`;
         }
     });
 
-    context.subscriptions.push(disposable, testCommand, generateCommand);
+    // Register command to generate gradient in current file
+    let generateGradientCommand = vscode.commands.registerCommand('tailwind-color-generator.generateGradient', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found');
+            return;
+        }
+
+        // Get colors from user
+        const colorsInput = await vscode.window.showInputBox({
+            prompt: 'Enter colors separated by commas (e.g., #FF0000, #00FF00, #0000FF)',
+            placeholder: '#FF6B6B, #4ECDC4, #45B7D1',
+            validateInput: (value) => {
+                if (!value) return 'Please enter at least 2 colors';
+                const colors = value.split(',').map(c => c.trim());
+                if (colors.length < 2) return 'Please enter at least 2 colors';
+                return null;
+            }
+        });
+
+        if (!colorsInput) return;
+
+        const colors = colorsInput.split(',').map(c => c.trim());
+
+        // Get direction
+        const direction = await vscode.window.showQuickPick(
+            [
+                { label: 'to-r', description: 'Left to right' },
+                { label: 'to-l', description: 'Right to left' },
+                { label: 'to-t', description: 'Bottom to top' },
+                { label: 'to-b', description: 'Top to bottom' },
+                { label: 'to-tr', description: 'Bottom-left to top-right' },
+                { label: 'to-tl', description: 'Bottom-right to top-left' },
+                { label: 'to-br', description: 'Top-left to bottom-right' },
+                { label: 'to-bl', description: 'Top-right to bottom-left' }
+            ],
+            { placeHolder: 'Select gradient direction' }
+        );
+
+        if (!direction) return;
+
+        // Get format
+        const format = await vscode.window.showQuickPick(
+            [
+                { label: 'tailwind', description: 'Tailwind CSS classes' },
+                { label: 'css', description: 'CSS background property' },
+                { label: 'json', description: 'JSON configuration' },
+                { label: 'detailed', description: 'Detailed configuration object' }
+            ],
+            { placeHolder: 'Select output format' }
+        );
+
+        if (!format) return;
+
+        // Get number of steps
+        const stepsInput = await vscode.window.showInputBox({
+            prompt: 'Enter number of gradient steps (2-50)',
+            placeholder: '10',
+            value: '10',
+            validateInput: (value) => {
+                const num = parseInt(value);
+                if (isNaN(num) || num < 2 || num > 50) {
+                    return 'Please enter a number between 2 and 50';
+                }
+                return null;
+            }
+        });
+
+        if (!stepsInput) return;
+
+        const steps = parseInt(stepsInput);
+
+        try {
+            // Generate the gradient
+            const gradient = generateGradientStops(colors, steps, direction.label);
+            const output = generateTailwindGradient(gradient, format.label);
+
+            let configText;
+            if (format.label === 'css') {
+                configText = output;
+            } else if (format.label === 'tailwind') {
+                configText = `<div class="${output}">
+  <!-- Your gradient content here -->
+</div>`;
+            } else if (format.label === 'json') {
+                configText = output;
+            } else {
+                configText = JSON.stringify(output, null, 2);
+            }
+
+            // Insert at cursor position
+            editor.edit(editBuilder => {
+                editBuilder.insert(editor.selection.active, configText);
+            });
+
+            vscode.window.showInformationMessage(`✅ Generated gradient from ${colors.length} colors with ${steps} steps`);
+
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error generating gradient: ${error.message}`);
+        }
+    });
+
+    context.subscriptions.push(disposable, testCommand, generateCommand, generateGradientCommand);
 
     // Show welcome message on first activation
     const hasShownWelcome = context.globalState.get('hasShownWelcome', false);

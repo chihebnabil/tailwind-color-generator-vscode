@@ -1,7 +1,7 @@
 {
   "name": "tailwind-color-generator",
   "displayName": "Tailwind Color Generator",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Generate Tailwind-compatible color palettes with MCP server integration for AI assistants",
   "publisher": "RemoteSkills",
   "main": "./extension.js",
@@ -137,6 +137,64 @@
         ],
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "analyzeColor"
+      },
+      {
+        "name": "generate_tailwind_gradient",
+        "displayName": "Generate Tailwind Gradient",
+        "modelDescription": "Generate Tailwind-compatible gradient color stops from two or more base colors, outputting CSS or Tailwind config",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "colors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of colors in hex format (e.g., [\"#FF0000\", \"#00FF00\", \"#0000FF\"])",
+              "minItems": 2
+            },
+            "steps": {
+              "type": "number",
+              "description": "Number of gradient steps to generate (default: 10)",
+              "minimum": 2,
+              "maximum": 50
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "to-r",
+                "to-l",
+                "to-t",
+                "to-b",
+                "to-tr",
+                "to-tl",
+                "to-br",
+                "to-bl"
+              ],
+              "description": "Gradient direction (default: \"to-r\")"
+            },
+            "format": {
+              "type": "string",
+              "enum": [
+                "css",
+                "tailwind",
+                "json",
+                "detailed"
+              ],
+              "description": "Output format (default: \"tailwind\")"
+            }
+          },
+          "required": [
+            "colors"
+          ]
+        },
+        "tags": [
+          "tailwind",
+          "colors",
+          "gradient"
+        ],
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "generateTailwindGradient"
       }
     ],
     "commands": [
@@ -153,6 +211,11 @@
       {
         "command": "tailwind-color-generator.generatePalette",
         "title": "Generate Color Palette",
+        "category": "Tailwind Color Generator"
+      },
+      {
+        "command": "tailwind-color-generator.generateGradient",
+        "title": "Generate Gradient",
         "category": "Tailwind Color Generator"
       }
     ],
@@ -177,6 +240,11 @@
           "command": "tailwind-color-generator.generatePalette",
           "when": "editorTextFocus",
           "group": "1_modification"
+        },
+        {
+          "command": "tailwind-color-generator.generateGradient",
+          "when": "editorTextFocus",
+          "group": "1_modification"
         }
       ],
       "commandPalette": [
@@ -191,6 +259,10 @@
         {
           "command": "tailwind-color-generator.generatePalette",
           "title": "Tailwind Color Generator: Generate Color Palette"
+        },
+        {
+          "command": "tailwind-color-generator.generateGradient",
+          "title": "Tailwind Color Generator: Generate Gradient"
         }
       ]
     }
