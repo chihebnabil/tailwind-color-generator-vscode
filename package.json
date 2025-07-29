@@ -1,7 +1,7 @@
 {
   "name": "tailwind-color-generator",
   "displayName": "Tailwind Color Generator",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Generate Tailwind-compatible color palettes with MCP server integration for AI assistants",
   "publisher": "RemoteSkills",
   "main": "./extension.js",
@@ -45,26 +45,40 @@
             },
             "format": {
               "type": "string",
-              "enum": ["js", "css", "json"],
+              "enum": [
+                "js",
+                "css",
+                "json"
+              ],
               "description": "Output format (default: \"js\")"
             }
           },
-          "required": ["baseColor"]
+          "required": [
+            "baseColor"
+          ]
         },
-        "tags": ["tailwind", "colors"],
+        "tags": [
+          "tailwind",
+          "colors"
+        ],
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "generateTailwindPalette"
       },
       {
         "name": "generate_color_scheme",
-        "displayName": "Generate Color Scheme", 
+        "displayName": "Generate Color Scheme",
         "modelDescription": "Generate multiple color palettes using color harmony strategies (complementary, analogous, monochromatic, triadic)",
         "inputSchema": {
           "type": "object",
           "properties": {
             "strategy": {
               "type": "string",
-              "enum": ["complementary", "analogous", "monochromatic", "triadic"],
+              "enum": [
+                "complementary",
+                "analogous",
+                "monochromatic",
+                "triadic"
+              ],
               "description": "Color harmony strategy to use"
             },
             "baseHue": {
@@ -73,18 +87,30 @@
             },
             "colorNames": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "Names for the generated color palettes"
             },
             "format": {
               "type": "string",
-              "enum": ["js", "css", "json"],
+              "enum": [
+                "js",
+                "css",
+                "json"
+              ],
               "description": "Output format (default: \"js\")"
             }
           },
-          "required": ["strategy"]
+          "required": [
+            "strategy"
+          ]
         },
-        "tags": ["tailwind", "colors", "harmony"],
+        "tags": [
+          "tailwind",
+          "colors",
+          "harmony"
+        ],
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "generateColorScheme"
       },
@@ -100,9 +126,15 @@
               "description": "Color to analyze in hex, hsl, or named format"
             }
           },
-          "required": ["color"]
+          "required": [
+            "color"
+          ]
         },
-        "tags": ["colors", "accessibility", "analysis"],
+        "tags": [
+          "colors",
+          "accessibility",
+          "analysis"
+        ],
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "analyzeColor"
       }
